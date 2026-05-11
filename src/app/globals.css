@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 276 14% 4%;
+    --foreground: 0 0% 98%;
+    --card: 276 16% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 276 16% 8%;
+    --popover-foreground: 0 0% 98%;
+    --muted: 276 15% 14%;
+    --muted-foreground: 252 7% 68%;
+    --accent: 336 95% 57%;
+    --accent-foreground: 0 0% 100%;
+    --primary: 220 100% 61%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 19 89% 52%;
+    --secondary-foreground: 0 0% 100%;
+    --destructive: 336 95% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 276 12% 18%;
+    --input: 276 12% 18%;
+    --ring: 45 95% 58%;
+    --radius: 1.25rem;
+    --palette-blue: #3777ff;
+    --palette-orange: #f26419;
+    --palette-pink: #f92a82;
+    --palette-onyx: #0c090d;
+    --palette-yellow: #f9c22e;
+    --surface-panel: #171219;
+    --surface-panel-strong: #211622;
+    --surface-subtle: #241827;
+    --text-soft: #b5adb9;
+    --color-success-accent: #f9c22e;
+    --color-success-soft: rgba(249, 194, 46, 0.16);
+    --color-destructive-accent: #f92a82;
+    --color-destructive-soft: rgba(249, 42, 130, 0.16);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  .theme {
+    --color-destructive-foreground: oklch(1 0 0);
+    --color-color-destructive-foreground: var(----color-destructive-foreground);
+  }
+  .dark {
+    --destructive-foreground: oklch(1 0 0);
+  }
+}
