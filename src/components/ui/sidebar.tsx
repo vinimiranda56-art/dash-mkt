@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export type SidebarItem = {
@@ -77,8 +78,8 @@ function SidebarNavItem({
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-lg p-2 text-sm font-medium text-muted-foreground transition hover:bg-white/10 hover:text-foreground",
-            item.active && "bg-[var(--palette-blue)] text-white shadow-sm",
+            "flex w-full items-center justify-between rounded-lg p-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-white/10 hover:text-foreground",
+            item.active && "bg-[var(--palette-blue)] text-white shadow-[0_0_20px_rgba(55,119,255,0.35)]",
           )}
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
@@ -89,20 +90,30 @@ function SidebarNavItem({
           </span>
           <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
         </button>
-        {open ? (
-          <div className="ml-4 mt-1 border-l border-border pl-2">
-            {item.items?.map((subItem) => (
-              <a
-                key={subItem.name}
-                href={subItem.href ?? "#"}
-                className="flex items-center gap-2 rounded-lg p-2 text-sm font-medium text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
-              >
-                {subItem.icon}
-                {subItem.name}
-              </a>
-            ))}
-          </div>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="ml-4 mt-1 border-l border-border pl-2">
+                {item.items?.map((subItem) => (
+                  <a
+                    key={subItem.name}
+                    href={subItem.href ?? "#"}
+                    className="flex items-center gap-2 rounded-lg p-2 text-sm font-medium text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
+                  >
+                    {subItem.icon}
+                    {subItem.name}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -118,9 +129,9 @@ function SidebarNavItem({
     <a
       href={item.href ?? "#"}
       className={cn(
-        "flex items-center gap-2 rounded-xl text-sm font-medium text-muted-foreground transition hover:bg-white/10 hover:text-foreground",
+        "flex items-center gap-2 rounded-xl text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-white/10 hover:text-foreground",
         compact ? "grid size-9 place-items-center" : "p-2",
-        item.active && "bg-[var(--palette-blue)] text-white shadow-sm",
+        item.active && "bg-[var(--palette-blue)] text-white shadow-[0_0_20px_rgba(55,119,255,0.35)]",
       )}
       aria-label={compact ? item.name : undefined}
       title={compact ? item.name : undefined}

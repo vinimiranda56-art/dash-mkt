@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const heatmapColumns = ["PESQ.", "D. GEN", "PMAX", "L. AD", "BAT.", "FORMS"];
@@ -152,7 +153,7 @@ export function RoasHeatmap() {
               <div
                 key={`${row.unit}-${heatmapColumns[index]}`}
                 className={cn(
-                  "grid h-9 place-items-center rounded text-sm font-bold tabular-nums",
+                  "grid h-9 place-items-center rounded text-sm font-bold tabular-nums cursor-default transition-[transform,box-shadow] duration-150 hover:scale-110 hover:shadow-[0_0_12px_rgba(55,119,255,0.5)] hover:z-10 relative",
                   value < 9 ? "text-foreground" : "text-white",
                 )}
                 style={{ backgroundColor: getHeatmapColor(value) }}
@@ -326,7 +327,12 @@ function HierarchyRow({
         : "hover:bg-white/[0.06] hover:shadow-[inset_3px_0_0_rgba(255,255,255,0.18)]";
 
   return (
-    <tr className={cn("border-b border-white/10 transition-[background-color,box-shadow]", hoverAccent)}>
+    <motion.tr
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={cn("border-b border-white/10 transition-[background-color,box-shadow]", hoverAccent)}
+    >
       <td className={cn("px-4 py-3", indent, bold && "font-bold", italic && "italic text-muted-foreground")}>
         <div className="flex items-center gap-2">
           {onToggle ? (
@@ -356,7 +362,7 @@ function HierarchyRow({
       <td className="px-4 py-3 text-center tabular-nums text-[var(--palette-orange)]">{row.sales}</td>
       <td className={cn("px-4 py-3 text-center tabular-nums", bold && "font-bold")}>{row.cpa}</td>
       <td className="px-4 py-3 text-center tabular-nums text-[var(--palette-orange)]">{row.roas}</td>
-    </tr>
+    </motion.tr>
   );
 }
 

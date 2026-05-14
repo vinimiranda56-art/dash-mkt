@@ -71,28 +71,10 @@ type BudgetItem = {
   reference: number;
 };
 
-const navItems: SidebarItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: <Home className="size-4" /> },
-  { name: "Performance", href: "/dashboard", icon: <BarChart3 className="size-4" /> },
-  { name: "Orcamentos", href: "/orcamentos", icon: <LineChartIcon className="size-4" />, active: true },
-  { name: "Leads", href: "#", icon: <LineChartIcon className="size-4" /> },
-  { name: "Metas", href: "#", icon: <Target className="size-4" /> },
-  {
-    name: "Relatorios",
-    href: "#",
-    icon: <FileBarChart className="size-4" />,
-    items: [
-      { name: "Canais", href: "#", icon: <PieChartIcon className="size-4" /> },
-      { name: "Integracoes", href: "#", icon: <Plug className="size-4" /> },
-      { name: "Equipe", href: "#", icon: <Users className="size-4" /> },
-    ],
-  },
-];
+import { dashboardFooterItems, getNavItems } from "@/components/dashboard-nav";
 
-const footerItems: SidebarItem[] = [
-  { name: "Metas", href: "#", icon: <Target className="size-4" /> },
-  { name: "Configuracoes", href: "#", icon: <Settings2 className="size-4" /> },
-];
+const navItems = getNavItems("orcamentos");
+const footerItems = dashboardFooterItems;
 
 const kpis = [
   { label: "Planejado total", value: "R$ 2,0M", icon: Briefcase, tone: "blue" },

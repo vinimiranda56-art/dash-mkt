@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import {
   Area,
   Bar,
@@ -26,19 +27,13 @@ import {
   DollarSign,
   FileBarChart,
   Gauge,
-  Home,
-  LineChartIcon,
   PieChartIcon,
-  Plug,
-  Settings2,
-  Target,
   TrendingUp,
-  Users,
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { Sidebar as AppSidebar, type SidebarItem } from "@/components/ui/sidebar";
+import { Sidebar as AppSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -213,28 +208,11 @@ const channelRows: MarketingChannelRow[] = [
   },
 ];
 
-const navItems: SidebarItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: <Home className="size-4" /> },
-  { name: "Performance", href: "/dashboard", icon: <BarChart3 className="size-4" />, active: true },
-  { name: "Orcamentos", href: "/orcamentos", icon: <LineChartIcon className="size-4" /> },
-  { name: "Leads", href: "#", icon: <LineChartIcon className="size-4" /> },
-  { name: "Metas", href: "#", icon: <Target className="size-4" /> },
-  {
-    name: "Relatorios",
-    href: "#",
-    icon: <FileBarChart className="size-4" />,
-    items: [
-      { name: "Canais", href: "#", icon: <PieChartIcon className="size-4" /> },
-      { name: "Integracoes", href: "#", icon: <Plug className="size-4" /> },
-      { name: "Equipe", href: "#", icon: <Users className="size-4" /> },
-    ],
-  },
-];
+import { dashboardFooterItems, getNavItems } from "@/components/dashboard-nav";
+import { TopNavbar } from "@/components/top-navbar";
 
-const footerItems: SidebarItem[] = [
-  { name: "Metas", href: "#", icon: <Target className="size-4" /> },
-  { name: "Configuracoes", href: "#", icon: <Settings2 className="size-4" /> },
-];
+const navItems = getNavItems(null);
+const footerItems = dashboardFooterItems;
 
 const monthNames = [
   "Janeiro",
@@ -282,9 +260,15 @@ export function MarketingDashboard() {
       <div className="flex min-h-screen">
         <DashboardSidebar />
 
-        <section className="flex-1 overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
+        <section className="flex-1 px-4 pb-5 sm:px-6 lg:px-8">
+          <TopNavbar />
           <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
-            <header className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-start sm:justify-between">
+            <motion.header
+              className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-start sm:justify-between"
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
               <div>
                 <h1 className="text-2xl font-semibold tracking-normal text-foreground">
                   Dashboard de Performance
@@ -313,11 +297,16 @@ export function MarketingDashboard() {
                   onChange={setSelectedPlatforms}
                 />
               </div>
-            </header>
+            </motion.header>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(720px,1.35fr)_minmax(560px,1fr)]">
               <div className="flex flex-col gap-4">
-                <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <motion.section
+                  className="grid grid-cols-1 gap-4 md:grid-cols-3"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+                >
                   {kpis.map((kpi) => (
                     <StatisticsCard2
                       key={kpi.label}
@@ -325,7 +314,7 @@ export function MarketingDashboard() {
                       trend={kpi.trend as "up" | "down"}
                     />
                   ))}
-                </section>
+                </motion.section>
 
                 <ChartPanel className="min-h-[432px]">
                   <div className="flex items-start justify-between">
@@ -685,8 +674,15 @@ function DailyDatePicker({
         </button>
       </div>
 
-      {isOpen ? (
-        <div className="absolute right-0 z-30 mt-2 w-[304px] rounded-2xl border border-white/10 bg-[var(--surface-panel)] p-3 shadow-xl">
+      <AnimatePresence>
+        {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: -8 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="absolute right-0 z-30 mt-2 w-[304px] rounded-2xl border border-white/10 bg-[var(--surface-panel)] p-3 shadow-xl"
+        >
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
@@ -750,8 +746,9 @@ function DailyDatePicker({
           <p className="mt-3 text-center text-xs text-muted-foreground">
             {selectingEnd ? "Selecione a data final" : "Selecione a data inicial"}
           </p>
-        </div>
-      ) : null}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -854,10 +851,22 @@ function formatDateRangeLabel(range: DateRangeValue) {
 }
 
 function ChartPanel({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-30px" });
+
   return (
-    <Card className={cn("rounded-[22px] border border-white/10 bg-[var(--surface-panel)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)]", className)}>
-      {children}
-    </Card>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      whileHover={{ y: -3, transition: { type: "spring", stiffness: 300, damping: 25 } }}
+      className="group"
+    >
+      <Card className={cn("rounded-[22px] border border-white/10 bg-[var(--surface-panel)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)] transition-[border-color,box-shadow] duration-300 group-hover:border-white/20 group-hover:shadow-[0_24px_55px_rgba(0,0,0,0.32)]", className)}>
+        {children}
+      </Card>
+    </motion.div>
   );
 }
 
@@ -1050,8 +1059,8 @@ function ChartFallback() {
       {[48, 68, 54, 78, 62, 86, 44].map((height, index) => (
         <span
           key={index}
-          className="flex-1 rounded-t bg-[var(--surface-panel-strong)]"
-          style={{ height: `${height}%` }}
+          className="flex-1 animate-pulse rounded-t bg-[var(--surface-panel-strong)]"
+          style={{ height: `${height}%`, animationDelay: `${index * 0.12}s` }}
         />
       ))}
     </div>
