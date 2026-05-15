@@ -4,6 +4,7 @@ import {
   FileBarChart,
   Home,
   LineChartIcon,
+  ListTree,
   PieChartIcon,
   Plug,
   Settings2,
@@ -16,6 +17,7 @@ import type { SidebarItem } from "@/components/ui/sidebar";
 export type DashboardNavKey =
   | "novos"
   | "orcamentos"
+  | "orcamentos-detalhes"
   | "leads"
   | "metas"
   | null;
@@ -24,7 +26,7 @@ export function getNavItems(active: DashboardNavKey): SidebarItem[] {
   return [
     {
       name: "Dashboard",
-      href: "/dashboard/novos",
+      href: "/dashboard",
       icon: <Home className="size-4" />,
       active: active === "novos",
     },
@@ -33,6 +35,12 @@ export function getNavItems(active: DashboardNavKey): SidebarItem[] {
       href: "/orcamentos",
       icon: <LineChartIcon className="size-4" />,
       active: active === "orcamentos",
+    },
+    {
+      name: "Orcamentos · detalhes",
+      href: "/orcamentos/detalhes",
+      icon: <ListTree className="size-4" />,
+      active: active === "orcamentos-detalhes",
     },
     {
       name: "Leads",

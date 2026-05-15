@@ -71,9 +71,22 @@ type BudgetItem = {
   reference: number;
 };
 
-import { dashboardFooterItems, getNavItems } from "@/components/dashboard-nav";
+import { dashboardFooterItems, getNavItems, type DashboardNavKey } from "@/components/dashboard-nav";
+import { RichPanel } from "@/components/dashboards-shell";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  type ChartConfig,
+} from "@/components/bar-chart";
 
-const navItems = getNavItems("orcamentos");
 const footerItems = dashboardFooterItems;
 
 const kpis = [
@@ -125,10 +138,46 @@ const detailRows = cityBudgets.flatMap((city) => [
   })),
 ]);
 
-export function BudgetControlDashboard() {
-  const [activeTab, setActiveTab] = useState<BudgetTab>("overview");
+// ─── Overview dashboard ──────────────────────────────────────────────────────
+
+export function BudgetOverviewDashboard() {
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
-  const [budgetModalDraft, setBudgetModalDraft] = useState<BudgetModalDraft>(() => getDefaultBudgetModalDraft());
+  const [budgetModalDraft, setBudgetModalDraft] = useState<BudgetModalDraft>(
+    () => getDefaultBudgetModalDraft(),
+  );
+
+  function openCreateBudgetModal() {
+    setBudgetModalDraft(getDefaultBudgetModalDraft());
+    setBudgetModalOpen(true);
+  }
+
+  return (
+    <BudgetShell
+      active="orcamentos"
+      title="Visao Geral"
+      eyebrow="Orcamentos · visao consolidada"
+      description="Comparativo planejado vs atual por praca e formato. Use os filtros para isolar combinacoes especificas."
+      onOpenBudgetModal={openCreateBudgetModal}
+    >
+      <OverviewTab />
+      {budgetModalOpen ? (
+        <BudgetPlannerModal
+          key={`${budgetModalDraft.mode}-${budgetModalDraft.level}-${budgetModalDraft.socialId}-${budgetModalDraft.unit}-${budgetModalDraft.inputMode}`}
+          initialDraft={budgetModalDraft}
+          onClose={() => setBudgetModalOpen(false)}
+        />
+      ) : null}
+    </BudgetShell>
+  );
+}
+
+// ─── Detail dashboard ────────────────────────────────────────────────────────
+
+export function BudgetDetailDashboard() {
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [budgetModalDraft, setBudgetModalDraft] = useState<BudgetModalDraft>(
+    () => getDefaultBudgetModalDraft(),
+  );
 
   function openCreateBudgetModal() {
     setBudgetModalDraft(getDefaultBudgetModalDraft());
@@ -147,18 +196,14 @@ export function BudgetControlDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="flex min-h-screen">
-        <BudgetSidebar />
-        <section className="flex-1 overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-[1660px] flex-col gap-4">
-            <PageHeader onOpenBudgetModal={openCreateBudgetModal} />
-            <KpiStrip />
-            <BudgetTabs activeTab={activeTab} onChange={setActiveTab} />
-            {activeTab === "overview" ? <OverviewTab /> : <DetailTab onEditBudgetModal={openEditBudgetModal} onOpenBudgetModal={openCreateBudgetModal} />}
-          </div>
-        </section>
-      </div>
+    <BudgetShell
+      active="orcamentos-detalhes"
+      title="Orcamentos & Detalhamento"
+      eyebrow="Orcamentos · controle granular"
+      description="Painel de controle, matriz de variacao e tabela hierarquica. Edicao item-a-item disponivel via modal."
+      onOpenBudgetModal={openCreateBudgetModal}
+    >
+      <DetailTab onEditBudgetModal={openEditBudgetModal} onOpenBudgetModal={openCreateBudgetModal} />
       {budgetModalOpen ? (
         <BudgetPlannerModal
           key={`${budgetModalDraft.mode}-${budgetModalDraft.level}-${budgetModalDraft.socialId}-${budgetModalDraft.unit}-${budgetModalDraft.inputMode}`}
@@ -166,23 +211,72 @@ export function BudgetControlDashboard() {
           onClose={() => setBudgetModalOpen(false)}
         />
       ) : null}
+    </BudgetShell>
+  );
+}
+
+// ─── Shared shell wrapper ────────────────────────────────────────────────────
+
+function BudgetShell({
+  active,
+  title,
+  eyebrow,
+  description,
+  onOpenBudgetModal,
+  children,
+}: {
+  active: DashboardNavKey;
+  title: string;
+  eyebrow: string;
+  description: string;
+  onOpenBudgetModal: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="flex min-h-screen">
+        <BudgetSidebar active={active} />
+        <section className="flex-1 overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-[1660px] flex-col gap-4">
+            <PageHeader
+              title={title}
+              eyebrow={eyebrow}
+              description={description}
+              onOpenBudgetModal={onOpenBudgetModal}
+            />
+            <KpiStrip />
+            {children}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
 
-function PageHeader({ onOpenBudgetModal }: { onOpenBudgetModal: () => void }) {
+function PageHeader({
+  title,
+  eyebrow,
+  description,
+  onOpenBudgetModal,
+}: {
+  title: string;
+  eyebrow: string;
+  description: string;
+  onOpenBudgetModal: () => void;
+}) {
   return (
     <header className="flex flex-col gap-4 pt-2 xl:flex-row xl:items-start xl:justify-between">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--palette-blue)]">
-          Command Center - Meta Ads
+          {eyebrow}
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-normal">Controle de Orcamentos</h1>
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <h1 className="mt-2 text-3xl font-semibold tracking-normal">{title}</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span>Snapshot 08/05/2026 14:32</span>
-          <span>-</span>
+          <span>·</span>
           <span>21 itens classificados</span>
-          <span>-</span>
+          <span>·</span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-[var(--palette-blue)]" />
             cache valido
@@ -299,16 +393,18 @@ function OverviewTab() {
 
   return (
     <>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
-          <CardHeader>
-            <CardTitle className="text-base">Planejado vs Atual por Praca</CardTitle>
-            <CardDescription>Comparativo agregado por unidade Social</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BudgetBars cities={visibleBudgets} />
-          </CardContent>
-        </Card>
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <RichPanel
+          title="Planejado vs atual por praca"
+          subtitle="Comparativo agregado em R$ por unidade Social · barras lado a lado mostram o gap"
+          toolbar={
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {visibleBudgets.length} {visibleBudgets.length === 1 ? "praca" : "pracas"} visiveis
+            </span>
+          }
+        >
+          <BudgetBars cities={visibleBudgets} />
+        </RichPanel>
         <OverviewAside
           activeOnly={activeOnly}
           onReset={resetFilters}
@@ -321,14 +417,24 @@ function OverviewTab() {
           visibleBudgets={visibleBudgets}
         />
       </section>
-      <section>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Pracas - clique num card para drill-down
-        </p>
+
+      <section className="mt-2">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">Pracas em detalhe</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cada card mostra a composicao por formato · clique para abrir o drill-down
+            </p>
+          </div>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {visibleBudgets.length}{" "}
+            {visibleBudgets.length === 1 ? "praca" : "pracas"}
+          </span>
+        </div>
         {visibleBudgets.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {visibleBudgets.map((city) => (
-            <CityCard key={city.id} city={city} />
+              <CityCard key={city.id} city={city} />
             ))}
           </div>
         ) : (
@@ -358,48 +464,138 @@ function DetailTab({
   );
 }
 
-function BudgetBars({ cities }: { cities: CityBudget[] }) {
-  const max = Math.max(120, ...cities.flatMap((city) => [city.planned, city.actual])) * 1.16;
+const budgetBarsConfig = {
+  planned: { label: "Planejado", color: "var(--palette-blue)" },
+  actual: { label: "Atual", color: "var(--palette-blue)" },
+} satisfies ChartConfig;
 
+function BudgetBars({ cities }: { cities: CityBudget[] }) {
   if (cities.length === 0) {
     return <EmptyFilterState />;
   }
 
-  return (
-    <div className="h-[520px] px-4 pb-4 pt-8">
-      <div
-        className="grid h-full items-end gap-5 border-b border-white/10"
-        style={{ gridTemplateColumns: `repeat(${cities.length}, minmax(72px, 1fr))` }}
-      >
-        {cities.map((city) => {
-          const over = city.actual > city.planned;
-          const actualColor = over ? "bg-[var(--palette-orange)]" : "bg-[var(--palette-blue)]/80";
+  const data = cities.map((city) => ({
+    city: city.city,
+    planned: city.planned,
+    actual: Math.round(city.actual),
+    over: city.actual > city.planned,
+  }));
 
-          return (
-            <div key={city.id} className="flex h-full flex-col items-center justify-end gap-2">
-              <div className="flex h-[390px] w-full items-end justify-center gap-2">
-                <Bar value={city.planned} max={max} label={`R$ ${city.planned}k`} className="bg-[var(--palette-blue)]" />
-                <Bar value={city.actual} max={max} label={`R$ ${Math.round(city.actual)}k`} className={actualColor} />
-              </div>
-              <p className="mt-2 text-center text-base font-semibold text-muted-foreground">{city.city}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-6 flex flex-wrap gap-8 text-sm text-muted-foreground">
+  return (
+    <div className="p-5">
+      <ChartContainer
+        config={budgetBarsConfig}
+        className="aspect-auto h-[460px] w-full"
+      >
+        <BarChart
+          accessibilityLayer
+          data={data}
+          barCategoryGap="22%"
+          margin={{ top: 24, right: 12, bottom: 12, left: 0 }}
+        >
+          <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+          <XAxis
+            dataKey="city"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#B5ADB9", fontSize: 11, fontWeight: 500 }}
+            interval={0}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#B5ADB9", fontSize: 10 }}
+            tickFormatter={(v) => `R$ ${v}k`}
+            width={56}
+          />
+          <ChartTooltip
+            cursor={{ fill: "rgba(255,255,255,0.04)" }}
+            content={<BudgetBarsTooltip />}
+          />
+          <Bar dataKey="planned" fill="var(--palette-blue)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="actual" radius={[4, 4, 0, 0]}>
+            {data.map((d) => (
+              <Cell
+                key={d.city}
+                fill={d.over ? "var(--palette-orange)" : "rgba(55, 119, 255, 0.55)"}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+      <div className="mt-4 flex flex-wrap items-center gap-5 border-t border-white/10 pt-3 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
         <LegendSwatch color="bg-[var(--palette-blue)]" label="Planejado" />
-        <LegendSwatch color="bg-[var(--palette-blue)]/80" label="Atual (abaixo)" />
+        <LegendSwatch color="bg-[var(--palette-blue)]/55" label="Atual (abaixo)" />
         <LegendSwatch color="bg-[var(--palette-orange)]" label="Atual (acima)" />
       </div>
     </div>
   );
 }
 
-function Bar({ value, max, label, className }: { value: number; max: number; label: string; className: string }) {
+type BudgetBarsTooltipItem = {
+  dataKey?: string | number;
+  name?: string | number;
+  value?: number | string;
+  color?: string;
+  payload?: { city?: string; planned?: number; actual?: number; over?: boolean };
+};
+
+function BudgetBarsTooltip({
+  active,
+  label,
+  payload,
+}: {
+  active?: boolean;
+  label?: string | number;
+  payload?: BudgetBarsTooltipItem[];
+}) {
+  if (!active || !payload?.length) return null;
+  const point = payload[0]?.payload;
+  const diff = point?.actual !== undefined && point.planned !== undefined ? point.actual - point.planned : 0;
+  const diffPct = point?.planned ? (diff / point.planned) * 100 : 0;
   return (
-    <div className="flex h-full flex-1 flex-col justify-end">
-      <p className="mb-2 text-center text-sm font-semibold text-muted-foreground">{label}</p>
-      <div className={cn("min-h-8 rounded-md", className)} style={{ height: `${(value / max) * 100}%` }} />
+    <div className="min-w-[180px] rounded-xl border border-white/10 bg-[#0c090d]/95 p-3 text-xs shadow-xl backdrop-blur">
+      <p className="mb-2 border-b border-white/10 pb-2 font-semibold">{label}</p>
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-4">
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span className="size-2 rounded-full bg-[var(--palette-blue)]" />
+            Planejado
+          </span>
+          <span className="font-mono font-semibold tabular-nums">
+            R$ {point?.planned ?? 0}k
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span
+              className="size-2 rounded-full"
+              style={{
+                backgroundColor: point?.over
+                  ? "var(--palette-orange)"
+                  : "rgba(55, 119, 255, 0.55)",
+              }}
+            />
+            Atual
+          </span>
+          <span className="font-mono font-semibold tabular-nums">
+            R$ {point?.actual ?? 0}k
+          </span>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-4 border-t border-white/10 pt-2">
+        <span className="text-muted-foreground">Variação</span>
+        <span
+          className="font-mono font-semibold tabular-nums"
+          style={{
+            color: point?.over ? "var(--palette-orange)" : "var(--palette-blue)",
+          }}
+        >
+          {diff >= 0 ? "+" : ""}
+          {diff}k ({diffPct >= 0 ? "+" : ""}
+          {diffPct.toFixed(1)}%)
+        </span>
+      </div>
     </div>
   );
 }
@@ -426,24 +622,10 @@ function OverviewAside({
   visibleBudgets: CityBudget[];
 }) {
   const allCitiesSelected = selectedCityIds.length === cityBudgets.length;
-  const totalPlanned = visibleBudgets.reduce((sum, city) => sum + city.planned, 0);
-  const belowCount = visibleBudgets.filter((city) => city.actual <= city.planned).length;
-  const health = visibleBudgets.length === 0 ? 0 : Math.round((belowCount / visibleBudgets.length) * 100);
-  const formatTotals = selectedFormats.map((format) => {
-    const total = visibleBudgets.reduce((sum, city) => {
-      const row = city.rows.find(([name]) => name === format);
-      return sum + (row ? Number(row[2]) : 0);
-    }, 0);
-    const planned = visibleBudgets.reduce((sum, city) => {
-      const row = city.rows.find(([name]) => name === format);
-      return sum + (row ? Number(row[1]) : 0);
-    }, 0);
-    return { name: format, value: `R$ ${money(total)}k`, diff: planned === 0 ? 0 : ((total - planned) / planned) * 100 };
-  });
 
   return (
-    <aside className="flex flex-col gap-4">
-      <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
+    <aside className="flex h-full flex-col gap-4">
+      <Card className="flex h-full flex-col rounded-xl border-white/10 bg-[var(--surface-panel)]">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="inline-flex items-center gap-2 text-base">
@@ -458,7 +640,7 @@ function OverviewAside({
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Praca</p>
             <div className="space-y-2 rounded-xl border border-white/10 bg-background/70 p-2">
               <FilterCheckRow checked={allCitiesSelected} label="Todas as pracas" onClick={onToggleAllCities} />
-              <div className="max-h-52 space-y-1 overflow-y-auto pr-1">
+              <div className="max-h-[420px] space-y-1 overflow-y-auto pr-1">
                 {cityBudgets.map((city) => (
                   <FilterCheckRow
                     key={city.id}
@@ -498,55 +680,6 @@ function OverviewAside({
           </button>
         </CardContent>
       </Card>
-      <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
-        <CardHeader className="pb-2">
-          <CardDescription>Saude do orcamento</CardDescription>
-          <CardTitle className="text-3xl text-[var(--palette-yellow)]">{health}%</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-2 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full bg-[var(--palette-yellow)]" style={{ width: `${health}%` }} />
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">{belowCount} abaixo - {Math.max(visibleBudgets.length - belowCount, 0)} acima</p>
-        </CardContent>
-      </Card>
-      <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
-        <CardHeader className="pb-2">
-          <CardDescription>Maiores desvios</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[...visibleBudgets]
-            .sort((left, right) => Math.abs(right.diff) - Math.abs(left.diff))
-            .slice(0, 3)
-            .map((city) => (
-            <div key={city.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className="truncate text-muted-foreground">{city.city}</span>
-              <span className={variationText(city.diff)}>{formatSignedPercent(city.diff)}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-      <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
-        <CardHeader className="pb-2">
-          <CardDescription>Por formato</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {formatTotals.length > 0 ? formatTotals.map(({ name, value, diff }) => (
-            <div key={name}>
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold">{name}</span>
-                <span className="text-muted-foreground">{value}</span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className={cn("h-full rounded-full", diff > 0 ? "bg-[var(--palette-orange)]" : "bg-[var(--palette-blue)]")} style={{ width: `${Math.min(100, 65 + Math.abs(diff) * 5)}%` }} />
-              </div>
-            </div>
-          )) : (
-            <p className="text-sm text-muted-foreground">Selecione um formato para ver os totais.</p>
-          )}
-          <p className="border-t border-white/10 pt-3 text-xs text-muted-foreground">Total filtrado: R$ {money(totalPlanned)}k</p>
-        </CardContent>
-      </Card>
     </aside>
   );
 }
@@ -576,52 +709,83 @@ function EmptyFilterState() {
 
 function CityCard({ city }: { city: typeof cityBudgets[number] }) {
   return (
-    <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)]">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-xl bg-[var(--palette-blue)]/15 text-[var(--palette-blue)]">
-              <Users className="size-5" />
+    <Card className="rounded-xl border-white/10 bg-[var(--surface-panel)] transition hover:border-white/20">
+      <CardHeader className="p-4 pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--palette-blue)]/15 text-[var(--palette-blue)]">
+              <Users className="size-4" />
             </span>
-            <div>
-              <CardTitle className="text-lg">{city.title}</CardTitle>
-              <CardDescription>{city.city}</CardDescription>
+            <div className="min-w-0">
+              <CardTitle className="truncate text-sm">{city.city}</CardTitle>
+              <CardDescription className="text-[11px]">{city.title}</CardDescription>
             </div>
           </div>
-          <Badge className="border-[var(--palette-blue)]/20 bg-[var(--palette-blue)]/12 text-[var(--palette-blue)]" variant="outline">Ativo</Badge>
+          <Badge
+            variant="outline"
+            className="border-[var(--palette-blue)]/30 bg-[var(--palette-blue)]/12 px-2 py-0.5 text-[10px] text-[var(--palette-blue)]"
+          >
+            Ativo
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <table className="w-full text-sm">
-          <thead className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+      <CardContent className="px-4 pb-4 pt-0">
+        <table className="w-full text-xs">
+          <thead className="text-[9px] uppercase tracking-[0.1em] text-muted-foreground/70">
             <tr>
-              <th className="py-2 text-left">Formato</th>
-              <th className="py-2 text-right">Planejado</th>
-              <th className="py-2 text-right">Atual</th>
-              <th className="py-2 text-right">Dif.</th>
+              <th className="pb-2 text-left font-semibold">Formato</th>
+              <th className="pb-2 text-right font-semibold">Plan.</th>
+              <th className="pb-2 text-right font-semibold">Atual</th>
+              <th className="pb-2 text-right font-semibold">Dif.</th>
             </tr>
           </thead>
           <tbody>
-            {city.rows.map(([name, planned, actual, diff]) => (
-              <tr key={String(name)} className="border-t border-white/10">
-                <td className="py-2 font-semibold">{name}</td>
-                <td className="py-2 text-right tabular-nums">R$ {money(Number(planned))}</td>
-                <td className="py-2 text-right tabular-nums">R$ {money(Number(actual))}</td>
-                <td className="py-2 text-right">
-                  <span className={cn("rounded-full px-2 py-1 text-xs font-semibold tabular-nums", Number(diff) > 0 ? "bg-[var(--palette-orange)]/15 text-[var(--palette-orange)]" : "bg-[var(--palette-blue)]/15 text-[var(--palette-blue)]")}>
-                    {diffMoney(Number(diff))}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {city.rows.map(([name, planned, actual, diff]) => {
+              const diffNum = Number(diff);
+              return (
+                <tr key={String(name)} className="border-t border-white/10">
+                  <td className="py-2 font-semibold">{name}</td>
+                  <td className="py-2 text-right tabular-nums text-muted-foreground">
+                    R$ {money(Number(planned))}
+                  </td>
+                  <td className="py-2 text-right tabular-nums">
+                    R$ {money(Number(actual))}
+                  </td>
+                  <td className="py-2 text-right">
+                    <DiffBadge diff={diffNum} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-sm font-semibold">
+        <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs font-semibold">
           <span>Total</span>
-          <span className={variationText(city.diff)}>{formatSignedPercent(city.diff)}</span>
+          <DiffBadge diff={city.diff} mode="percent" />
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function DiffBadge({ diff, mode = "value" }: { diff: number; mode?: "value" | "percent" }) {
+  const positive = diff > 0;
+  const neutral = diff === 0;
+  const text = mode === "percent" ? formatSignedPercent(diff) : diffMoney(diff);
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "border-transparent px-2 py-0.5 text-[10px] font-semibold tabular-nums",
+        neutral
+          ? "bg-white/5 text-muted-foreground"
+          : positive
+            ? "bg-[var(--palette-orange)]/15 text-[var(--palette-orange)]"
+            : "bg-[var(--palette-blue)]/15 text-[var(--palette-blue)]",
+      )}
+    >
+      {text}
+    </Badge>
   );
 }
 
@@ -1159,13 +1323,13 @@ function getDefaultBudgetValues(items: BudgetItem[], inputMode: InputMode) {
   );
 }
 
-function BudgetSidebar() {
+function BudgetSidebar({ active }: { active: DashboardNavKey }) {
   return (
     <AppSidebar
       compact
       className="border-white/10 bg-[#0c090d]"
       footerItems={footerItems}
-      items={navItems}
+      items={getNavItems(active)}
       logo={
         <div className="grid size-9 place-items-center rounded-xl bg-[var(--palette-blue)] text-white shadow-[0_0_24px_rgba(55,119,255,0.35)]">
           <Wallet className="size-5" />
