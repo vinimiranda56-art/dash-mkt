@@ -4,6 +4,7 @@ import {
   FileBarChart,
   Home,
   LineChartIcon,
+  ListChecks,
   ListTree,
   PieChartIcon,
   Plug,
@@ -19,6 +20,7 @@ export type DashboardNavKey =
   | "orcamentos"
   | "orcamentos-detalhes"
   | "leads"
+  | "tasks"
   | "metas"
   | null;
 
@@ -47,6 +49,12 @@ export function getNavItems(active: DashboardNavKey): SidebarItem[] {
       href: "#",
       icon: <UserPlus className="size-4" />,
       active: active === "leads",
+    },
+    {
+      name: "Tarefas",
+      href: "/tasks",
+      icon: <ListChecks className="size-4" />,
+      active: active === "tasks",
     },
     {
       name: "Metas",

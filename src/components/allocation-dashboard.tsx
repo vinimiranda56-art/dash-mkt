@@ -305,23 +305,23 @@ function HierarchyPanel({ rows }: { rows: FormatRow[] }) {
           </tbody>
           <tfoot>
             <tr>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-sm font-bold">Total geral</td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-sm font-semibold">Total geral</td>
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums">
                 {fmtInt(total.investment)}
               </td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums">
                 {fmtInt(total.leads)}
               </td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums">
                 {fmtDec(calcCpl(total))}
               </td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums text-[var(--palette-orange)]">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums text-[var(--palette-orange)]">
                 {fmtInt(total.sales)}
               </td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums">
                 {fmtInt(calcCpa(total))}
               </td>
-              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-bold tabular-nums text-[var(--palette-orange)]">
+              <td className="border-t-2 border-white/20 px-4 py-3 text-right font-semibold tabular-nums text-[var(--palette-orange)]">
                 {fmtRoas(calcRoas(total))}
               </td>
             </tr>

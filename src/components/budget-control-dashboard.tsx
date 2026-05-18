@@ -830,10 +830,10 @@ function ControlPanel({
                   <button
                     type="button"
                     aria-label={`Editar orcamento de ${city.title} - ${city.city}`}
-                    className="grid size-7 place-items-center rounded-lg border border-white/10 text-muted-foreground transition hover:border-[var(--palette-blue)]/40 hover:bg-[var(--palette-blue)]/12 hover:text-[var(--palette-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--palette-blue)]"
+                    className="grid size-9 place-items-center rounded-lg border border-white/10 text-muted-foreground transition hover:border-[var(--palette-blue)]/40 hover:bg-[var(--palette-blue)]/12 hover:text-[var(--palette-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--palette-blue)]"
                     onClick={() => onEditBudgetModal(city.id)}
                   >
-                    <Pencil className="size-3.5" />
+                    <Pencil className="size-4" />
                   </button>
                 </div>
                 <p className="mt-4 font-semibold">R$ {city.planned}k</p>

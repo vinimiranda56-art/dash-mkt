@@ -3,10 +3,11 @@
 import { Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import { Sidebar as AppSidebar } from "@/components/ui/sidebar";
-import { dashboardFooterItems, getNavItems } from "@/components/dashboard-nav";
+import { dashboardFooterItems, getNavItems, type DashboardNavKey } from "@/components/dashboard-nav";
 import { TopNavbar } from "@/components/top-navbar";
 
 type Props = {
+  active?: DashboardNavKey;
   title?: string;
   eyebrow?: string;
   description?: string;
@@ -14,9 +15,9 @@ type Props = {
   children: React.ReactNode;
 };
 
-export function DashboardsShell({ title, eyebrow, description, toolbar, children }: Props) {
+export function DashboardsShell({ active = "novos", title, eyebrow, description, toolbar, children }: Props) {
   const hasHeader = Boolean(title || eyebrow || description || toolbar);
-  const navItems = getNavItems("novos");
+  const navItems = getNavItems(active);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
