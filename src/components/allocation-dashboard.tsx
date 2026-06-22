@@ -20,13 +20,11 @@ import {
   cpa as calcCpa,
   cpl as calcCpl,
   emptyAggregate,
-  filterDailyByRange,
   fmtDec,
   fmtInt,
   fmtMoney,
   fmtMoneyShort,
   fmtRoas,
-  generateDataset,
   PRACAS,
   roas as calcRoas,
   sum,
@@ -64,13 +62,47 @@ import {
   FilterCheckboxDropdown,
   type DateFilterValue,
 } from "@/components/filter-controls";
+import { fetchMarketingDashboardData } from "@/lib/marketing-dashboard-client";
+import type { MarketingDashboardDailyPoint } from "@/lib/marketing-dashboard-types";
 
 export function AllocationSection() {
-  const dataset = React.useMemo(() => generateDataset(42), []);
-
   const [dateValue, setDateValue] = React.useState<DateFilterValue>(() => defaultDateValue());
+  const [dataset, setDataset] = React.useState<FormatRow[]>([]);
+  const [dailyData, setDailyData] = React.useState<DailyPoint[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [selectedPracas, setSelectedPracas] = React.useState<Praca[]>([...PRACAS]);
   const [selectedPlatforms, setSelectedPlatforms] = React.useState<Platform[]>([...ALL_PLATFORMS]);
+
+  React.useEffect(() => {
+    let active = true;
+
+    fetchMarketingDashboardData({
+      startDate: toIsoDate(dateValue.range.start),
+      endDate: toIsoDate(dateValue.range.end),
+    })
+      .then((response) => {
+        if (active) {
+          setDataset(response.rows);
+          setDailyData(response.daily.map(toDailyPoint));
+          setLoadError(null);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setLoadError(
+            error instanceof Error ? error.message : "Erro ao carregar dados.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dateValue.range.start, dateValue.range.end]);
 
   const filtered = React.useMemo(
     () =>
@@ -100,9 +132,20 @@ export function AllocationSection() {
         />
       </FilterBar>
 
+      {isLoading ? (
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-muted-foreground">
+          Carregando dados do BigQuery...
+        </div>
+      ) : null}
+      {loadError ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {loadError}
+        </div>
+      ) : null}
+
       <KpiStrip rows={filtered} totals={totals} />
 
-      <EvolucaoTemporalPanel range={dateValue.range} />
+      <EvolucaoTemporalPanel data={dailyData} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1.15fr_1.1fr]">
         <MatrixPanel rows={filtered} metric="roas" />
@@ -116,6 +159,13 @@ export function AllocationSection() {
 }
 
 // ─── KPI strip ───────────────────────────────────────────────────────────────
+
+function toDailyPoint(point: MarketingDashboardDailyPoint): DailyPoint {
+  return {
+    ...point,
+    date: new Date(`${point.date}T00:00:00`),
+  };
+}
 
 function KpiStrip({
   totals,
@@ -425,6 +475,10 @@ function toggle(curr: Set<string>, value: string) {
   return next;
 }
 
+function toIsoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 // ─── Single Matrix Panel (ROAS or CPA) ───────────────────────────────────────
 
 function MatrixPanel({
@@ -600,18 +654,18 @@ function shortPraca(praca: Praca): string {
 
 function abbreviate(fmt: FormatKey): string {
   switch (fmt) {
-    case "pesquisa":
+    case "Pesquisa":
       return "pesq.";
-    case "demand gen":
-      return "d.gen";
-    case "pmax":
+    case "Discovery":
+      return "disc.";
+    case "Pmax":
       return "pmax";
-    case "lead_ad":
+    case "Lead_ad":
       return "l.ad";
-    case "(bateria) lead_ad":
-      return "bat.";
-    case "forms":
+    case "Forms":
       return "forms";
+    case "Outros":
+      return "out.";
   }
 }
 
@@ -759,11 +813,7 @@ const timeSeriesConfig = {
   logs: { label: "Logs", color: "var(--palette-pink)" },
 } satisfies ChartConfig;
 
-function EvolucaoTemporalPanel({ range }: { range: { start: Date; end: Date } }) {
-  const data = React.useMemo<DailyPoint[]>(
-    () => filterDailyByRange(range.start, range.end),
-    [range],
-  );
+function EvolucaoTemporalPanel({ data }: { data: DailyPoint[] }) {
   const empty = data.length === 0;
   const [modalPoint, setModalPoint] = React.useState<DailyPoint | null>(null);
 

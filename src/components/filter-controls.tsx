@@ -126,12 +126,13 @@ type StandardPresetId = (typeof STANDARD_PRESETS)[number]["id"];
 export type DatePresetId = StandardPresetId | "custom";
 export type DateFilterValue = { preset: DatePresetId; range: DateRange };
 
-// Fixed reference so SSR + client render match. Update when the mock period rolls.
-export const REFERENCE_DATE = new Date(2026, 4, 14); // 2026-05-14
+function referenceDate(): Date {
+  return stripTime(new Date());
+}
 
 export function rangeFromPreset(
   presetId: StandardPresetId,
-  reference: Date = REFERENCE_DATE,
+  reference: Date = referenceDate(),
 ): DateRange {
   const preset = STANDARD_PRESETS.find((p) => p.id === presetId) ?? STANDARD_PRESETS[0];
   const end = stripTime(reference);

@@ -20,12 +20,10 @@ import {
   cpl as calcCpl,
   cpProposal,
   cpVisit,
-  filterDailyByRange,
   fmtDec,
   fmtInt,
   fmtMoney,
   fmtPct,
-  generateDataset,
   PRACAS,
   sum,
   type DailyPoint,
@@ -48,18 +46,52 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from "@/components/bar-chart";
+import { fetchMarketingDashboardData } from "@/lib/marketing-dashboard-client";
+import type { MarketingDashboardDailyPoint } from "@/lib/marketing-dashboard-types";
 
 type Dimension = "Formato" | "Praça" | "Plataforma";
 const DIMENSIONS: Dimension[] = ["Formato", "Praça", "Plataforma"];
 
 export function FunnelSection() {
-  const dataset = React.useMemo(() => generateDataset(42), []);
-
   const [dateValue, setDateValue] = React.useState<DateFilterValue>(() => defaultDateValue());
+  const [dataset, setDataset] = React.useState<FormatRow[]>([]);
+  const [dailyData, setDailyData] = React.useState<DailyPoint[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [selectedPracas, setSelectedPracas] = React.useState<Praca[]>([...PRACAS]);
   const [selectedPlatforms, setSelectedPlatforms] = React.useState<Platform[]>([...ALL_PLATFORMS]);
   const [selectedFormats, setSelectedFormats] = React.useState<FormatKey[]>([...ALL_FORMATS]);
   const [dimension, setDimension] = React.useState<Dimension>("Formato");
+
+  React.useEffect(() => {
+    let active = true;
+
+    fetchMarketingDashboardData({
+      startDate: toIsoDate(dateValue.range.start),
+      endDate: toIsoDate(dateValue.range.end),
+    })
+      .then((response) => {
+        if (active) {
+          setDataset(response.rows);
+          setDailyData(response.daily.map(toDailyPoint));
+          setLoadError(null);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setLoadError(
+            error instanceof Error ? error.message : "Erro ao carregar dados.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dateValue.range.start, dateValue.range.end]);
 
   const filtered = React.useMemo(
     () =>
@@ -98,6 +130,17 @@ export function FunnelSection() {
         />
       </FilterBar>
 
+      {isLoading ? (
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-muted-foreground">
+          Carregando dados do BigQuery...
+        </div>
+      ) : null}
+      {loadError ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {loadError}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
         <FunnelPanel totals={totals} pracasSelected={selectedPracas.length} />
         <CostCards totals={totals} />
@@ -112,12 +155,19 @@ export function FunnelSection() {
         <ConversionDiagnosticPanel rows={filtered} dimension={dimension} />
       </div>
 
-      <EvolucaoConversaoPanel range={dateValue.range} />
+      <EvolucaoConversaoPanel data={dailyData} />
     </section>
   );
 }
 
 // ─── Funnel viz ──────────────────────────────────────────────────────────────
+
+function toDailyPoint(point: MarketingDashboardDailyPoint): DailyPoint {
+  return {
+    ...point,
+    date: new Date(`${point.date}T00:00:00`),
+  };
+}
 
 function FunnelPanel({
   totals,
@@ -527,11 +577,7 @@ const conversionConfig = {
   visitaToVenda: { label: "Visita → Venda", color: "var(--palette-orange)" },
 } satisfies ChartConfig;
 
-function EvolucaoConversaoPanel({ range }: { range: { start: Date; end: Date } }) {
-  const data = React.useMemo<DailyPoint[]>(
-    () => filterDailyByRange(range.start, range.end),
-    [range],
-  );
+function EvolucaoConversaoPanel({ data }: { data: DailyPoint[] }) {
   const empty = data.length === 0;
 
   return (
@@ -829,4 +875,6 @@ function DiagnosticTooltip({
   );
 }
 
-
+function toIsoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}

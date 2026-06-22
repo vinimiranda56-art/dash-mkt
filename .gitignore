@@ -40,3 +40,6 @@ next-env.d.ts
 .appdata
 .deploy-package-*
 marketing-dashboard-*.tar.gz
+
+# agente local
+.claude/

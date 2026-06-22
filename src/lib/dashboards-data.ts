@@ -1,26 +1,29 @@
-export type Platform = "Google" | "Meta · Bidu";
-export const ALL_PLATFORMS: Platform[] = ["Google", "Meta · Bidu"];
+﻿import type { MarketingDashboardRow } from "@/lib/marketing-dashboard-types";
+
+export type Platform = "Google" | "Meta - Bidu" | "Outros";
+export const ALL_PLATFORMS: Platform[] = ["Google", "Meta - Bidu", "Outros"];
 
 export type FormatKey =
-  | "pesquisa"
-  | "demand gen"
-  | "pmax"
-  | "lead_ad"
-  | "(bateria) lead_ad"
-  | "forms";
+  | "Pesquisa"
+  | "Discovery"
+  | "Pmax"
+  | "Lead_ad"
+  | "Forms"
+  | "Outros";
 
 export const FORMATS_BY_PLATFORM: Record<Platform, FormatKey[]> = {
-  Google: ["pesquisa", "demand gen", "pmax"],
-  "Meta · Bidu": ["lead_ad", "(bateria) lead_ad", "forms"],
+  Google: ["Pesquisa", "Discovery", "Pmax"],
+  "Meta - Bidu": ["Lead_ad", "Forms", "Outros"],
+  Outros: ["Outros"],
 };
 
 export const ALL_FORMATS: FormatKey[] = [
-  "pesquisa",
-  "demand gen",
-  "pmax",
-  "lead_ad",
-  "(bateria) lead_ad",
-  "forms",
+  "Pesquisa",
+  "Discovery",
+  "Pmax",
+  "Lead_ad",
+  "Forms",
+  "Outros",
 ];
 
 export const PRACAS = [
@@ -28,28 +31,18 @@ export const PRACAS = [
   "Mogi das Cruzes 1",
   "Mogi das Cruzes 3",
   "Indaiatuba",
-  "São Carlos",
-  "São José dos Campos",
-  "Curitiba — PR",
+  "Sao Carlos",
+  "Sao Jose dos Campos",
+  "Curitiba - PR",
   "Campinas",
-  "Belo Horizonte — MG",
-  "Goiânia",
+  "Belo Horizonte - MG",
+  "Goias - GO",
   "Franca",
+  "Brasilia",
 ] as const;
-export type Praca = (typeof PRACAS)[number];
+export type Praca = string;
 
-export type FormatRow = {
-  format: FormatKey;
-  platform: Platform;
-  praca: Praca;
-  investment: number;
-  leads: number;
-  proposals: number;
-  visits: number;
-  sales: number;
-  revenue: number;
-};
-
+export type FormatRow = MarketingDashboardRow;
 // Seeded LCG so the mock is stable on reload but varies per "session" if we want
 function seeded(seed: number) {
   let s = seed >>> 0;
@@ -59,31 +52,32 @@ function seeded(seed: number) {
   };
 }
 
-// Baseline per praça/format to keep numbers realistic + similar to mockup
+// Baseline per praÃ§a/format to keep numbers realistic + similar to mockup
 const PRACA_BASE: Record<Praca, number> = {
   "Mogi das Cruzes 2": 103230,
   "Mogi das Cruzes 1": 92664,
   "Mogi das Cruzes 3": 93418,
   Indaiatuba: 92412,
-  "São Carlos": 87818,
-  "São José dos Campos": 70704,
-  "Curitiba — PR": 69791,
+  "Sao Carlos": 87818,
+  "Sao Jose dos Campos": 70704,
+  "Curitiba - PR": 69791,
   Campinas: 54526,
-  "Belo Horizonte — MG": 32738,
-  Goiânia: 18900,
+  "Belo Horizonte - MG": 32738,
+  "Goias - GO": 18900,
   Franca: 14200,
+  Brasilia: 14200,
 };
 
 const FORMAT_PROFILE: Record<
   FormatKey,
   { cpl: number; leadToProp: number; propToVisit: number; visitToSale: number; ticket: number }
 > = {
-  pesquisa: { cpl: 19, leadToProp: 0.12, propToVisit: 0.48, visitToSale: 0.26, ticket: 24000 },
-  "demand gen": { cpl: 15, leadToProp: 0.095, propToVisit: 0.41, visitToSale: 0.21, ticket: 23000 },
-  pmax: { cpl: 16, leadToProp: 0.088, propToVisit: 0.42, visitToSale: 0.24, ticket: 23500 },
-  lead_ad: { cpl: 13.2, leadToProp: 0.096, propToVisit: 0.34, visitToSale: 0.21, ticket: 23000 },
-  "(bateria) lead_ad": { cpl: 13.4, leadToProp: 0.091, propToVisit: 0.4, visitToSale: 0.205, ticket: 22500 },
-  forms: { cpl: 16.8, leadToProp: 0.095, propToVisit: 0.49, visitToSale: 0.155, ticket: 22000 },
+  Pesquisa: { cpl: 19, leadToProp: 0.12, propToVisit: 0.48, visitToSale: 0.26, ticket: 24000 },
+  Discovery: { cpl: 15, leadToProp: 0.095, propToVisit: 0.41, visitToSale: 0.21, ticket: 23000 },
+  Pmax: { cpl: 16, leadToProp: 0.088, propToVisit: 0.42, visitToSale: 0.24, ticket: 23500 },
+  Lead_ad: { cpl: 13.2, leadToProp: 0.096, propToVisit: 0.34, visitToSale: 0.21, ticket: 23000 },
+  Forms: { cpl: 16.8, leadToProp: 0.095, propToVisit: 0.49, visitToSale: 0.155, ticket: 22000 },
+  Outros: { cpl: 18, leadToProp: 0.08, propToVisit: 0.35, visitToSale: 0.16, ticket: 22000 },
 };
 
 const PRACA_MULT: Record<Praca, number> = {
@@ -91,13 +85,14 @@ const PRACA_MULT: Record<Praca, number> = {
   "Mogi das Cruzes 1": 1.0,
   "Mogi das Cruzes 3": 0.95,
   Indaiatuba: 0.86,
-  "São Carlos": 0.82,
-  "São José dos Campos": 0.84,
-  "Curitiba — PR": 0.9,
+  "Sao Carlos": 0.82,
+  "Sao Jose dos Campos": 0.84,
+  "Curitiba - PR": 0.9,
   Campinas: 1.22,
-  "Belo Horizonte — MG": 0.88,
-  Goiânia: 0.78,
+  "Belo Horizonte - MG": 0.88,
+  "Goias - GO": 0.78,
   Franca: 0.74,
+  Brasilia: 0.74,
 };
 
 export function generateDataset(seed = 42): FormatRow[] {
@@ -159,7 +154,7 @@ function roundSale(value: number) {
   return Math.max(0, Math.round(value));
 }
 
-// ─── Aggregation helpers ─────────────────────────────────────────────────────
+// â”€â”€â”€ Aggregation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type Aggregate = {
   investment: number;
@@ -204,7 +199,7 @@ export function cpVisit(agg: Aggregate) {
   return agg.visits ? agg.investment / agg.visits : 0;
 }
 
-// ─── Format helpers ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Format helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const intFmt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 const decFmt = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -232,10 +227,10 @@ export function fmtPct(value: number) {
 }
 
 export function fmtRoas(value: number) {
-  return `${decFmt.format(value)}×`;
+  return `${decFmt.format(value)}Ã—`;
 }
 
-// ─── Daily time series (1 abr — 6 mai 2026) ──────────────────────────────────
+// â”€â”€â”€ Daily time series (1 abr â€” 6 mai 2026) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type DailyPoint = {
   date: Date;
@@ -294,7 +289,7 @@ export function filterDailyByRange(start: Date, end: Date): DailyPoint[] {
   return DAILY_SERIES.filter((p) => p.date.getTime() >= s && p.date.getTime() <= e);
 }
 
-// ─── Log entries (mocked actions for the modal) ──────────────────────────────
+// â”€â”€â”€ Log entries (mocked actions for the modal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LOG_USERS = [
   "Vinicius Tavares",
@@ -306,30 +301,30 @@ const LOG_USERS = [
 ];
 
 const LOG_ACTIONS: { action: string; status: LogStatus }[] = [
-  { action: "Orçamento ajustado", status: "success" },
+  { action: "OrÃ§amento ajustado", status: "success" },
   { action: "Campanha pausada", status: "warning" },
-  { action: "Novo anúncio publicado", status: "success" },
-  { action: "Conjunto de anúncios duplicado", status: "success" },
+  { action: "Novo anÃºncio publicado", status: "success" },
+  { action: "Conjunto de anÃºncios duplicado", status: "success" },
   { action: "Bid cap atualizado", status: "success" },
   { action: "Criativo aprovado", status: "success" },
   { action: "Criativo rejeitado", status: "error" },
-  { action: "Audiência sincronizada", status: "success" },
-  { action: "Exportação concluída", status: "success" },
-  { action: "Falha na importação", status: "error" },
-  { action: "Conversão API revisada", status: "warning" },
+  { action: "AudiÃªncia sincronizada", status: "success" },
+  { action: "ExportaÃ§Ã£o concluÃ­da", status: "success" },
+  { action: "Falha na importaÃ§Ã£o", status: "error" },
+  { action: "ConversÃ£o API revisada", status: "warning" },
   { action: "Pixel reinstalado", status: "success" },
 ];
 
 const LOG_TARGETS = [
-  "Mogi 2 · Google · pesquisa",
-  "Mogi 1 · Meta · lead_ad",
-  "Indaiatuba · Google · pmax",
-  "Campinas · Meta · forms",
-  "São Carlos · Google · demand gen",
-  "Curitiba · Meta · bateria lead_ad",
-  "SJC · Google · pesquisa",
-  "BH · Meta · lead_ad",
-  "Mogi 3 · Google · pmax",
+  "Mogi 2 Â· Google Â· pesquisa",
+  "Mogi 1 Â· Meta Â· lead_ad",
+  "Indaiatuba Â· Google Â· pmax",
+  "Campinas Â· Meta Â· forms",
+  "SÃ£o Carlos Â· Google Â· demand gen",
+  "Curitiba Â· Meta Â· bateria lead_ad",
+  "SJC Â· Google Â· pesquisa",
+  "BH Â· Meta Â· lead_ad",
+  "Mogi 3 Â· Google Â· pmax",
 ];
 
 function hashSeed(date: Date): number {
