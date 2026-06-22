@@ -123,6 +123,8 @@ export function TaskEditorModal({
 
   React.useEffect(() => {
     if (open) {
+      // Reset wizard state whenever the modal opens for a different task.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(toForm(task ?? null));
       setStep(0);
     }

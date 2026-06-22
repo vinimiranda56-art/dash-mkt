@@ -113,13 +113,9 @@ export function TasksDashboard() {
     return sortedList;
   }, [filtered, sortKey, sortDir]);
 
-  // Reset page when filters/sort change
-  React.useEffect(() => {
-    setPage(0);
-  }, [filtered.length, sortKey, sortDir]);
-
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const pageItems = sorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const safePage = Math.min(page, totalPages - 1);
+  const pageItems = sorted.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
   // ── KPIs ───────────────────────────────────────────────────────────────────
   const kpis = React.useMemo(() => {
@@ -430,7 +426,7 @@ export function TasksDashboard() {
           </div>
 
           <Pagination
-            page={page}
+            page={safePage}
             totalPages={totalPages}
             totalItems={sorted.length}
             onChange={setPage}
