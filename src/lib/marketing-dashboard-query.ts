@@ -1,5 +1,6 @@
 import "server-only";
 
+import { generateDataset } from "@/lib/dashboards-data";
 import { runBigQuery } from "@/lib/bigquery";
 import type {
   MarketingDashboardDailyPoint,
@@ -274,16 +275,78 @@ export async function getMarketingDashboardData(
     start_date: filters.startDate,
     end_date: filters.endDate,
   };
-  const [rows, daily] = await Promise.all([
-    runBigQuery<BigQueryDashboardRow>(dashboardSql, params),
-    runBigQuery<BigQueryDailyRow>(dailySql, params),
-  ]);
+
+  try {
+    const [rows, daily] = await Promise.all([
+      runBigQuery<BigQueryDashboardRow>(dashboardSql, params),
+      runBigQuery<BigQueryDailyRow>(dailySql, params),
+    ]);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      rows: rows.map(normalizeRow),
+      daily: daily.map(normalizeDailyPoint),
+      source: "bigquery",
+    };
+  } catch (error) {
+    console.warn("marketing-dashboard BigQuery unavailable; using fallback dataset", error);
+    return getFallbackMarketingDashboardData(filters);
+  }
+}
+
+function getFallbackMarketingDashboardData(
+  filters: Required<Pick<MarketingDashboardFilters, "startDate" | "endDate">>,
+): MarketingDashboardResponse {
+  const rows = generateDataset(42);
 
   return {
     generatedAt: new Date().toISOString(),
-    rows: rows.map(normalizeRow),
-    daily: daily.map(normalizeDailyPoint),
+    rows,
+    daily: generateFallbackDaily(rows, filters),
+    source: "fallback",
   };
+}
+
+function generateFallbackDaily(
+  rows: MarketingDashboardRow[],
+  filters: Required<Pick<MarketingDashboardFilters, "startDate" | "endDate">>,
+): MarketingDashboardDailyPoint[] {
+  const totalInvestment = rows.reduce((sum, row) => sum + row.investment, 0);
+  const totalRevenue = rows.reduce((sum, row) => sum + row.revenue, 0);
+  const totalSales = rows.reduce((sum, row) => sum + row.sales, 0);
+  const start = new Date(`${filters.startDate}T00:00:00Z`);
+  const end = new Date(`${filters.endDate}T00:00:00Z`);
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+    return [];
+  }
+
+  const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / dayMs) + 1);
+  const visibleDays = Math.min(totalDays, 30);
+  const offsetDays = totalDays - visibleDays;
+  const dailyInvestment = totalInvestment / visibleDays;
+  const dailySales = totalSales / visibleDays;
+  const baseRoas = totalInvestment ? totalRevenue / totalInvestment : 0;
+
+  return Array.from({ length: visibleDays }, (_, index) => {
+    const date = new Date(start.getTime() + (offsetDays + index) * dayMs);
+    const wave = 0.92 + ((index % 7) * 0.025);
+    const investment = Math.round(dailyInvestment * wave);
+    const sales = Math.max(0, Math.round(dailySales * (0.9 + ((index % 5) * 0.05))));
+
+    return {
+      date: date.toISOString().slice(0, 10),
+      label: normalizeDateLabel(date.toISOString().slice(0, 10)),
+      investment,
+      roas: Number((baseRoas * (0.95 + ((index % 6) * 0.02))).toFixed(2)),
+      sales,
+      logs: 0,
+      leadToProposta: 10 + (index % 4),
+      propostaToVisita: 38 + (index % 8),
+      visitaToVenda: 18 + (index % 5),
+    };
+  });
 }
 
 function normalizeRow(row: BigQueryDashboardRow): MarketingDashboardRow {

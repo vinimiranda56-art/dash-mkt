@@ -44,4 +44,5 @@ export type MarketingDashboardResponse = {
   generatedAt: string;
   rows: MarketingDashboardRow[];
   daily: MarketingDashboardDailyPoint[];
+  source?: "bigquery" | "fallback";
 };
