@@ -14,7 +14,7 @@ export type StatisticsRow = {
 export type StatisticsCard2Props = {
   label: string;
   value: string;
-  delta: string;
+  delta?: string;
   icon: LucideIcon;
   rows?: StatisticsRow[];
   progress?: number;
@@ -88,14 +88,16 @@ export function StatisticsCard2({
 
           <div className="flex items-end justify-between gap-3">
             <p className="text-2xl font-semibold tracking-tight">{value}</p>
-            <Badge
-              appearance="light"
-              size="sm"
-              variant={isPositive ? "success" : "destructive"}
-              className="mb-0.5"
-            >
-              {delta}
-            </Badge>
+            {delta ? (
+              <Badge
+                appearance="light"
+                size="sm"
+                variant={isPositive ? "success" : "destructive"}
+                className="mb-0.5"
+              >
+                {delta}
+              </Badge>
+            ) : null}
           </div>
 
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -107,7 +109,9 @@ export function StatisticsCard2({
             />
           </div>
 
-          <p className={cn("mt-2 text-xs font-medium", textClass)}>{delta} vs anterior</p>
+          {delta ? (
+            <p className={cn("mt-2 text-xs font-medium", textClass)}>{delta} vs anterior</p>
+          ) : null}
 
           {rows.length ? (
             <div className="mt-3 space-y-1.5 text-xs">
