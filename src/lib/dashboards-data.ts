@@ -1,4 +1,4 @@
-﻿import type { MarketingDashboardRow } from "@/lib/marketing-dashboard-types";
+import type { MarketingDashboardRow } from "@/lib/marketing-dashboard-types";
 
 export type Platform = "Google" | "Meta - Bidu" | "Outros";
 export const ALL_PLATFORMS: Platform[] = ["Google", "Meta - Bidu", "Outros"];
@@ -52,7 +52,7 @@ function seeded(seed: number) {
   };
 }
 
-// Baseline per praÃ§a/format to keep numbers realistic + similar to mockup
+// Baseline per praça/format to keep numbers realistic + similar to mockup
 const PRACA_BASE: Record<Praca, number> = {
   "Mogi das Cruzes 2": 103230,
   "Mogi das Cruzes 1": 92664,
@@ -154,7 +154,7 @@ function roundSale(value: number) {
   return Math.max(0, Math.round(value));
 }
 
-// â”€â”€â”€ Aggregation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Aggregation helpers ─────────────────────────────────────────────────────
 
 export type Aggregate = {
   investment: number;
@@ -199,7 +199,7 @@ export function cpVisit(agg: Aggregate) {
   return agg.visits ? agg.investment / agg.visits : 0;
 }
 
-// â”€â”€â”€ Format helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Format helpers ──────────────────────────────────────────────────────────
 
 const intFmt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 const decFmt = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -227,10 +227,10 @@ export function fmtPct(value: number) {
 }
 
 export function fmtRoas(value: number) {
-  return `${decFmt.format(value)}Ã—`;
+  return `${decFmt.format(value)}×`;
 }
 
-// â”€â”€â”€ Daily time series (1 abr â€” 6 mai 2026) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Daily time series (1 abr — 6 mai 2026) ──────────────────────────────────
 
 export type DailyPoint = {
   date: Date;
@@ -289,7 +289,7 @@ export function filterDailyByRange(start: Date, end: Date): DailyPoint[] {
   return DAILY_SERIES.filter((p) => p.date.getTime() >= s && p.date.getTime() <= e);
 }
 
-// â”€â”€â”€ Log entries (mocked actions for the modal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Log entries (mocked actions for the modal) ──────────────────────────────
 
 const LOG_USERS = [
   "Vinicius Tavares",
@@ -301,30 +301,30 @@ const LOG_USERS = [
 ];
 
 const LOG_ACTIONS: { action: string; status: LogStatus }[] = [
-  { action: "OrÃ§amento ajustado", status: "success" },
+  { action: "Orçamento ajustado", status: "success" },
   { action: "Campanha pausada", status: "warning" },
-  { action: "Novo anÃºncio publicado", status: "success" },
-  { action: "Conjunto de anÃºncios duplicado", status: "success" },
+  { action: "Novo anúncio publicado", status: "success" },
+  { action: "Conjunto de anúncios duplicado", status: "success" },
   { action: "Bid cap atualizado", status: "success" },
   { action: "Criativo aprovado", status: "success" },
   { action: "Criativo rejeitado", status: "error" },
-  { action: "AudiÃªncia sincronizada", status: "success" },
-  { action: "ExportaÃ§Ã£o concluÃ­da", status: "success" },
-  { action: "Falha na importaÃ§Ã£o", status: "error" },
-  { action: "ConversÃ£o API revisada", status: "warning" },
+  { action: "Audiência sincronizada", status: "success" },
+  { action: "Exportação concluída", status: "success" },
+  { action: "Falha na importação", status: "error" },
+  { action: "Conversão API revisada", status: "warning" },
   { action: "Pixel reinstalado", status: "success" },
 ];
 
 const LOG_TARGETS = [
-  "Mogi 2 Â· Google Â· pesquisa",
-  "Mogi 1 Â· Meta Â· lead_ad",
-  "Indaiatuba Â· Google Â· pmax",
-  "Campinas Â· Meta Â· forms",
-  "SÃ£o Carlos Â· Google Â· demand gen",
-  "Curitiba Â· Meta Â· bateria lead_ad",
-  "SJC Â· Google Â· pesquisa",
-  "BH Â· Meta Â· lead_ad",
-  "Mogi 3 Â· Google Â· pmax",
+  "Mogi 2 · Google · pesquisa",
+  "Mogi 1 · Meta · lead_ad",
+  "Indaiatuba · Google · pmax",
+  "Campinas · Meta · forms",
+  "São Carlos · Google · demand gen",
+  "Curitiba · Meta · bateria lead_ad",
+  "SJC · Google · pesquisa",
+  "BH · Meta · lead_ad",
+  "Mogi 3 · Google · pmax",
 ];
 
 function hashSeed(date: Date): number {
