@@ -201,7 +201,7 @@ function KpiStrip({
       {items.map((item) => (
         <StatisticsCard2
           key={item.label}
-          className="min-h-0 [&_[data-slot='card-content']]:p-4"
+          className="min-h-0 [&_[data-slot='card-content']]:p-4 !bg-[rgba(249,42,130,0.22)]"
           label={item.featured ? `★ ${item.label}` : item.label}
           value={item.value}
           delta={item.delta}
