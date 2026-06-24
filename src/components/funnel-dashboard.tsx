@@ -340,7 +340,7 @@ function CostCards({ totals }: { totals: ReturnType<typeof sum> }) {
       title="Custo por etapa do funil"
       subtitle={`Quanto cada R$ investido custa em cada nível do pipeline · total ${fmtMoney(totals.investment)}`}
     >
-      <div className="grid grid-cols-2">
+      <div className="grid grid-cols-2 bg-[rgba(249,42,130,0.22)]">
         {cells.map((cell, i) => (
           <motion.div
             key={cell.stage}
