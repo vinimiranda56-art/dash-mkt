@@ -81,7 +81,7 @@ leads AS (
       WHEN 'Bidu' THEN 'Meta - Bidu'
       ELSE 'Outros'
     END AS platform,
-    COALESCE(tipo_campanha, 'Outros') AS format,
+    normalize_format(tipo_campanha) AS format,
     COUNTIF(is_lead) AS leads
   FROM \`biduquery.curated_marketing.vw_leads_base\`, params
   WHERE data_comercial BETWEEN params.start_date AND params.end_date
@@ -96,7 +96,7 @@ funil AS (
       WHEN 'meta' THEN 'Meta - Bidu'
       ELSE 'Outros'
     END AS platform,
-    COALESCE(tipo_campanha, 'Outros') AS format,
+    normalize_format(tipo_campanha) AS format,
     COUNTIF(tem_proposta) AS proposals,
     COUNTIF(tem_visita) AS visits,
     COUNTIF(tem_venda_fotovoltaico OR tem_venda_bitrix) AS sales
@@ -105,6 +105,14 @@ funil AS (
   params
   WHERE lead_date BETWEEN params.start_date AND params.end_date
   GROUP BY 1, 2, 3, 4
+),
+unit_totals AS (
+  SELECT
+    normalize_unit(unidade) AS praca,
+    SUM(valor_gasto) AS investment
+  FROM \`biduquery.curated_marketing.leads_por_unidade\`, params
+  WHERE data BETWEEN params.start_date AND params.end_date
+  GROUP BY 1
 ),
 spend_social AS (
   SELECT
@@ -131,7 +139,7 @@ lead_share AS (
     format,
     SAFE_DIVIDE(
       l.leads,
-      SUM(l.leads) OVER (PARTITION BY social, platform, format)
+      SUM(l.leads) OVER (PARTITION BY praca)
     ) AS share
   FROM leads l
 ),
@@ -140,12 +148,10 @@ spend AS (
     ls.praca,
     ls.platform,
     ls.format,
-    SUM(ss.investment * ls.share) AS investment
+    SUM(ut.investment * ls.share) AS investment
   FROM lead_share ls
-  JOIN spend_social ss
-    ON ss.social = ls.social
-   AND ss.platform = ls.platform
-   AND ss.format = ls.format
+  JOIN unit_totals ut
+    ON ut.praca = ls.praca
   GROUP BY 1, 2, 3
 ),
 vendas AS (
@@ -156,7 +162,7 @@ vendas AS (
       WHEN 'meta' THEN 'Meta - Bidu'
       ELSE 'Outros'
     END AS platform,
-    COALESCE(tipo_campanha, 'Outros') AS format,
+    normalize_format(tipo_campanha) AS format,
     SUM(SAFE_CAST(REPLACE(valor, ',', '.') AS NUMERIC)) AS revenue,
     COUNT(*) AS sales_from_sales_view
   FROM \`biduquery.curated_marketing.curated_marketing\`, params
@@ -180,7 +186,7 @@ joined AS (
     COALESCE(l.leads, 0) AS leads,
     COALESCE(f.proposals, 0) AS proposals,
     COALESCE(f.visits, 0) AS visits,
-    COALESCE(v.sales_from_sales_view, f.sales, 0) AS sales,
+    COALESCE(v.sales_from_sales_view, 0) AS sales,
     COALESCE(v.revenue, 0) AS revenue,
     COALESCE(s.investment, 0) AS investment
   FROM keys k
@@ -217,10 +223,10 @@ WITH params AS (
 ),
 spend_daily AS (
   SELECT
-    date,
-    SUM(spend) AS investment
-  FROM \`biduquery.gold_marketing.fact_marketing_daily\`, params
-  WHERE date BETWEEN params.start_date AND params.end_date
+    data AS date,
+    SUM(valor_gasto) AS investment
+  FROM \`biduquery.curated_marketing.leads_por_unidade\`, params
+  WHERE data BETWEEN params.start_date AND params.end_date
   GROUP BY 1
 ),
 leads_daily AS (
@@ -255,11 +261,11 @@ SELECT
   FORMAT_DATE('%d %b', s.date) AS label,
   COALESCE(s.investment, 0) AS investment,
   SAFE_DIVIDE(COALESCE(v.revenue, 0), NULLIF(s.investment, 0)) AS roas,
-  COALESCE(v.sales, f.sales, 0) AS sales,
+  COALESCE(v.sales, 0) AS sales,
   0 AS logs,
   SAFE_MULTIPLY(SAFE_DIVIDE(COALESCE(f.proposals, 0), NULLIF(l.leads, 0)), 100) AS lead_to_proposta,
   SAFE_MULTIPLY(SAFE_DIVIDE(COALESCE(f.visits, 0), NULLIF(f.proposals, 0)), 100) AS proposta_to_visita,
-  SAFE_MULTIPLY(SAFE_DIVIDE(COALESCE(v.sales, f.sales, 0), NULLIF(f.visits, 0)), 100) AS visita_to_venda
+  SAFE_MULTIPLY(SAFE_DIVIDE(COALESCE(v.sales, 0), NULLIF(f.visits, 0)), 100) AS visita_to_venda
 FROM spend_daily s
 LEFT JOIN leads_daily l ON l.date = s.date
 LEFT JOIN funil_daily f ON f.date = s.date
