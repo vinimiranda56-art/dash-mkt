@@ -3,9 +3,11 @@ import "server-only";
 import { BigQuery } from "@google-cloud/bigquery";
 
 const projectId = process.env.GOOGLE_CLOUD_PROJECT || "biduquery";
+const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
 const bigquery = new BigQuery({
   projectId,
+  ...(credentialsJson ? { credentials: JSON.parse(credentialsJson) } : {}),
 });
 
 export async function runBigQuery<T>(
